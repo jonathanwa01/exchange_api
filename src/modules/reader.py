@@ -1,16 +1,18 @@
 
+from datetime import datetime, timedelta
+import pandas as pd
 import requests
 
 
 class CurrencyReader:
     """
     A class which handles the request and reading of the exchange api
-    
+
     Attr:
         URL (str): URL to exhange API
     """
     URL_STRUCTURE_EXCHANGE = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@{date}/{apiVersion}/currencies/{start_currency}.json'
-    
+
     def __init__(self, start_currency: str, currencies: list[str]):
         '''
         Constructor. Creates a reader instance to read from API.
@@ -22,10 +24,9 @@ class CurrencyReader:
         '''
         self.abbreviation_parser = AbbreviationParser()
         self.start_currency: str = start_currency
-        self.currencies: list[str] =  currencies
-        
+        self.currencies: list[str] = currencies
 
-    def read(self, date: str) -> dict[str, float]:
+    def read(self, date: datetime) -> dict[str, float]:
         '''
         Requests exchange rates on a given date.
 
@@ -33,28 +34,55 @@ class CurrencyReader:
             date (str): String of date in format YYYY-MM-DD or 'latest'
 
         Returns:
-            exchange_dict (dict[str, float]): Dictionary of exchange rates relative to self.start_currency
+            exchange_dict (dict[str, float]): Dictionary of exchange rates
+            relative to self.start_currency
 
         Exceptions:
             Exception: Invalid Currency
         '''
-        start_currency_abbrv = self.abbreviation_parser.name_to_abbrv(self.start_currency)
-        exchange_currencies = [self.abbreviation_parser.name_to_abbrv(name) for name in self.currencies] 
+        start_currency_abbrv: str = self.abbreviation_parser.name_to_abbrv(
+            self.start_currency)
+        exchange_currencies: str = [
+            self.abbreviation_parser.name_to_abbrv(name)
+            for name in self.currencies]
+
         exchange_dict: dict[str, float] = {}
-        response = requests.get(CurrencyReader.URL_STRUCTURE_EXCHANGE.format(date=date, apiVersion='v1',
-                                start_currency=start_currency_abbrv))
+        response = requests.get(CurrencyReader.URL_STRUCTURE_EXCHANGE.format(
+            date=date.strftime("%Y-%m-%d"), apiVersion='v1',
+            start_currency=start_currency_abbrv))
+
         if response.status_code == 200:
             RESPONSE_DATA = response.json()
-
             for cur in exchange_currencies:
                 if cur in RESPONSE_DATA[start_currency_abbrv]:
-                    exchange_dict[self.abbreviation_parser.abbrv_to_name(cur)] = RESPONSE_DATA[start_currency_abbrv][cur]
+                    exchange_dict[self.abbreviation_parser.abbrv_to_name(
+                        cur)] = RESPONSE_DATA[start_currency_abbrv][cur]
                 else:
                     raise Exception(f'Currency code {cur} is invalid')
-        if response.status_code == 404:
-            raise FileNotFoundError(f'Page {CurrencyReader.URL_STRUCTURE_EXCHANGE.format(date=date, apiVersion='v1',
-                                start_currency=start_currency_abbrv)} could not be found')
+        elif response.status_code == 404:
+            raise FileNotFoundError(
+                f'Page {
+                    CurrencyReader.URL_STRUCTURE_EXCHANGE.format(
+                        date=date,
+                        apiVersion='v1',
+                        start_currency=start_currency_abbrv)} could not be found')
+
         return exchange_dict
+
+    def read_timeinterval(
+            self,
+            start_date: datetime,
+            end_date: datetime) -> pd.DataFrame:
+
+        exchange_df: pd.DataFrame = pd.DataFrame(columns=["Date"]
+                                                 + self.currencies)
+        while start_date <= end_date:
+            exchange_dict = self.read(date=start_date)
+            exchange_dict['Date'] = start_date
+            df = pd.DataFrame([exchange_dict])
+            exchange_df = pd.concat([exchange_df, df], ignore_index=True)
+            start_date += timedelta(days=1)
+        return exchange_df
 
 
 class AbbreviationParser:
@@ -69,16 +97,19 @@ class AbbreviationParser:
         Constructor.
 
         '''
-        response = requests.get(AbbreviationParser.URL_STRUCTURE_CURRENCY_LIST.format(date='latest', apiVersion='v1',
-                                endpoint='currencies.json'))
-        self.abbreviation_dict = response.json() if response.status_code == 200 else {}
-    
+        response = requests.get(
+            AbbreviationParser.URL_STRUCTURE_CURRENCY_LIST.format(
+                date='latest',
+                apiVersion='v1',
+                endpoint='currencies.json'))
+        self.abbreviation_dict: dict[str, str] = response.json(
+        ) if response.status_code == 200 else {}
 
     def abbrv_to_name(self, abbrv: str) -> str:
         '''
             Returns full name of the abbreviation
 
-            Args: 
+            Args:
                 abbrv (str): String of abbreviation
 
             Returns:
@@ -93,7 +124,7 @@ class AbbreviationParser:
         '''
             Returns full name of the abbreviation
 
-            Args: 
+            Args:
                 abbrv (str): String of abbreviation
 
             Returns:
@@ -103,4 +134,3 @@ class AbbreviationParser:
             if self.abbreviation_dict[key] == name:
                 return key
         raise Exception(f'Currency name {name} is invalid')
-
