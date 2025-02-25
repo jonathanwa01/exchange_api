@@ -64,11 +64,11 @@ def fetch_daily(r: CurrencyReader) -> None:
 
     while True:
         fetch_update(r)
-        main()
+        visualize()
         time.sleep(CHECKINTERVALL)
 
 
-def main():
+def visualize():
     v = Visualizer(OUTPUT_FILE)
     v.read_fom_parquet()
     fig = v.create_scatter_plot()
