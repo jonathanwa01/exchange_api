@@ -83,7 +83,7 @@ class CurrencyReader:
 
         exchange_df: pd.DataFrame = pd.DataFrame(columns=["Date"] + self.currencies)
         time_dif: datetime = end_date - start_date
-        print(range(time_dif.days))
+        print("Fetching Exchange Data from API")
         for _ in tqdm(range(time_dif.days)):
             exchange_dict = self.read(date=start_date)
             exchange_dict["Date"] = start_date
