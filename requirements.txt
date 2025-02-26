@@ -1,0 +1,7 @@
+autopep8==2.3.2
+flake8==7.1.2
+pandas==2.2.3
+plotly==6.0.0
+pyarrow==19.0.1
+requests==2.32.3
+tqdm==4.67.1
