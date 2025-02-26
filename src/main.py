@@ -63,7 +63,6 @@ def fetch_daily(r: CurrencyReader) -> None:
 
     while True:
         fetch_update(r)
-        visualize()
         time.sleep(CHECKINTERVALL)
 
 
