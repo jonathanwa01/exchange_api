@@ -78,5 +78,4 @@ def visualize():
 if __name__ == "__main__":
     r = CurrencyReader(START_CURRENCY, CURRENCIES)
     initial_fetch_exchange(r)
-    thread = threading.Thread(target=fetch_daily, args=(r,), name="DailyFetchThread")
-    thread.start()
+    visualize()
