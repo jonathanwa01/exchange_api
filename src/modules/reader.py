@@ -32,7 +32,7 @@ class CurrencyReader:
         Requests exchange rates on a given date.
 
         Args:
-            date (str): String of date in format YYYY-MM-DD or 'latest'
+            date (datetime): date on which the data is fetched
 
         Returns:
             exchange_dict (dict[str, float]): Dictionary of exchange rates
@@ -80,6 +80,18 @@ class CurrencyReader:
     def read_timeinterval(
         self, start_date: datetime, end_date: datetime
     ) -> pd.DataFrame:
+        """
+        Requests exchange rates in a given time interval between start_date
+        and end_date
+
+        Args:
+            start_date (datetime): start date
+            end_date (datetime): end date
+
+        Returns:
+            exchange_df (pd.DataFrame): dataframe of exchange rates
+            relative to self.start_currency
+        """
 
         exchange_df: pd.DataFrame = pd.DataFrame(columns=["Date"] + self.currencies)
         time_dif: datetime = end_date - start_date

@@ -1,6 +1,5 @@
 from datetime import datetime
 import os
-import threading
 import time
 import pandas as pd
 from modules.reader import CurrencyReader
