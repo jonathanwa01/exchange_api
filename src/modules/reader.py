@@ -44,7 +44,7 @@ class CurrencyReader:
         start_currency_abbrv: str = self.abbreviation_parser.name_to_abbrv(
             self.start_currency
         )
-        exchange_currencies: str = [
+        exchange_currencies: list[str] = [
             self.abbreviation_parser.name_to_abbrv(name) for name in self.currencies
         ]
 
@@ -58,11 +58,11 @@ class CurrencyReader:
         )
 
         if response.status_code == 200:
-            RESPONSE_DATA = response.json()
+            response_data = response.json()
             for cur in exchange_currencies:
-                if cur in RESPONSE_DATA[start_currency_abbrv]:
+                if cur in response_data[start_currency_abbrv]:
                     exchange_dict[self.abbreviation_parser.abbrv_to_name(cur)] = (
-                        RESPONSE_DATA[start_currency_abbrv][cur]
+                        response_data[start_currency_abbrv][cur]
                     )
                 else:
                     raise Exception(f"Currency code {cur} is invalid")
@@ -94,12 +94,12 @@ class CurrencyReader:
         """
 
         exchange_df: pd.DataFrame = pd.DataFrame(columns=["Date"] + self.currencies)
-        time_dif: datetime = end_date - start_date
+        time_dif: timedelta = end_date - start_date
         print("Fetching Exchange Data from API")
         for _ in tqdm(range(time_dif.days)):
             exchange_dict = self.read(date=start_date)
-            exchange_dict["Date"] = start_date
             df = pd.DataFrame([exchange_dict])
+            df["Date"] = pd.to_datetime(start_date)
             exchange_df = pd.concat([exchange_df, df], ignore_index=True)
             start_date += timedelta(days=1)
         return exchange_df

@@ -40,13 +40,15 @@ def fetch_update(r: CurrencyReader) -> None:
     now: datetime = datetime.now()
     if now > datetime.fromtimestamp(os.path.getmtime(OUTPUT_FILE)):
         try:
-            # fetch current data
-            update_dict = r.read(now)
-            # append date
-            update_dict["Date"] = now
-            update_df = pd.DataFrame([update_dict])
             # read parquet file, update and safe again
             df = pd.read_parquet(OUTPUT_FILE)
+            if pd.to_datetime(df["Date"].iloc[0]).date() == now.date():
+                print("Data is already up to date")
+                return
+            # fetch current data
+            update_dict = r.read(now)
+            update_df = pd.DataFrame([update_dict])
+            update_df["Date"] = pd.to_datetime(now)
             df = pd.concat([update_df, df], ignore_index=True)
             df.to_parquet(OUTPUT_FILE)
         except Exception:
